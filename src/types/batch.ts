@@ -1,19 +1,17 @@
 
 export interface Batch {
   id: string;
-  title: string;
+  batchName: string;
   description: string;
-  instructor: string;
-  duration: string;
-  level: 'Beginner' | 'Intermediate' | 'Advanced';
-  price: number;
-  image: string;
   startDate: string;
-  endDate: string;
-  maxStudents: number;
-  enrolledStudents: number;
-  status: 'Active' | 'Upcoming' | 'Completed';
-  features: string[];
+  duration: string;
+  mode: "online" | "offline";
+  price: number;
+  thumbnail: string;
+  totalSlots: number;
+  filledSlots: number;
+  language: "English" | "Hindi" | "Marathi";
+  registeredUsers: string[];
 }
 
 export interface Enrollment {

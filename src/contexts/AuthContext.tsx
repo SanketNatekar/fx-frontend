@@ -1,18 +1,18 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 interface User {
-  id: string;
-  name: string;
+  _id: string;
+  fullName: string;
   email: string;
   role: 'admin' | 'user';
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, role: 'admin' | 'user') => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  signup: (name: string, email: string, password: string) => Promise<boolean>;
+  signup: (name: string, email: string, password: string, phone?: string) => Promise<boolean>;
   isLoading: boolean;
 }
 
@@ -30,67 +30,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Base URL of your backend
+  const BASE_URL = 'http://localhost:4000/api';
+
   useEffect(() => {
-    // Check for existing session
-    const savedUser = localStorage.getItem('fxstreampro_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    const storedUser = localStorage.getItem('fxstreampro_user');
+    const token = localStorage.getItem('fxstreampro_token');
+
+    if (storedUser && token) {
+      setUser(JSON.parse(storedUser));
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string, role: 'admin' | 'user'): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock authentication - in real app, this would be an API call
-    if (email && password) {
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: email.split('@')[0],
-        email,
-        role
-      };
-      
-      setUser(newUser);
-      localStorage.setItem('fxstreampro_user', JSON.stringify(newUser));
-      setIsLoading(false);
+    try {
+      const res = await axios.post(`${BASE_URL}/auth/login`, { email, password });
+      const { token, user } = res.data;
+
+      setUser(user);
+      localStorage.setItem('fxstreampro_user', JSON.stringify(user));
+      localStorage.setItem('fxstreampro_token', token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       return true;
+    } catch (err) {
+      console.error('Login failed:', err);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
-    return false;
   };
 
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
+  const signup = async (name: string, email: string, password: string, phone: string): Promise<boolean> => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (name && email && password) {
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        name,
+    try {
+      const res = await axios.post(`${BASE_URL}/auth/register`, {
+        fullName: name,
         email,
-        role: 'user'
-      };
-      
-      setUser(newUser);
-      localStorage.setItem('fxstreampro_user', JSON.stringify(newUser));
-      setIsLoading(false);
+        password,
+        phone,
+        role: 'user', // default role
+      });
+
+      // Optionally login after registration or redirect to login page
       return true;
+    } catch (err) {
+      console.error('Signup failed:', err);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
-    return false;
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('fxstreampro_user');
+    localStorage.removeItem('fxstreampro_token');
+    delete axios.defaults.headers.common['Authorization'];
   };
 
   return (

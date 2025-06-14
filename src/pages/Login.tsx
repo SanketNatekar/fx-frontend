@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, TrendingUp, User, Shield } from 'lucide-react';
@@ -29,7 +28,7 @@ const Login = () => {
       return;
     }
 
-    const success = await login(email, password, role);
+    const success = await login(email, password);
     
     if (success) {
       toast({
